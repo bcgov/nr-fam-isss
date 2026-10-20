@@ -2,10 +2,10 @@ import { Login } from "@carbon/icons-react";
 import { Button, Column, Grid, InlineNotification } from "@carbon/react";
 import { useEffect, useState, type FC } from "react";
 import logo from "@/assets/images/bc-gov-logo.png";
-import treeLogs from "@/assets/images/tree-logs.jpg";
 import { useAuth } from "@/context/auth/useAuth";
 import { consumeSessionExpired } from "@/context/auth/sessionExpiry";
 import { IdpProvider } from "@/enum/IdpEnum";
+import { getBranding } from "@/utils/Branding";
 import "./Landing.css";
 
 /**
@@ -14,7 +14,7 @@ import "./Landing.css";
  * Laid out like nr-fsp-new's landing page - content on the left, a full-height
  * photograph on the right - so the two applications introduce themselves the
  * same way. The assets are FAM's own: its BC Gov logo and the tree-logs
- * photograph the Vue landing used.
+ * photograph the Vue landing used, unless env.json brands the deployment otherwise.
  *
  * Two providers and no third: FAM admits IDIR and Business BCeID. BC Services
  * Card is deliberately absent - the backend's IdentityProvider allowlist refuses
@@ -22,6 +22,7 @@ import "./Landing.css";
  */
 export const Landing: FC = () => {
     const { login } = useAuth();
+    const branding = getBranding();
 
     /*
         Why this is a notification and not a toast.
@@ -56,11 +57,11 @@ export const Landing: FC = () => {
                         </div>
 
                         <h1 id="landing-title" className="landing-title">
-                            FAM
+                            {branding.acronym}
                         </h1>
 
                         <h2 id="landing-subtitle" className="landing-subtitle">
-                            Forests Access Management
+                            {branding.name}
                         </h2>
 
                         {sessionExpired ? (
@@ -114,8 +115,8 @@ export const Landing: FC = () => {
 
                 <Column className="landing-img-col" sm={4} md={8} lg={8}>
                     <img
-                        src={treeLogs}
-                        alt="Stacked logs at a British Columbia mill"
+                        src={branding.landingImageUrl}
+                        alt={branding.landingImageAlt}
                         className="landing-img"
                     />
                 </Column>

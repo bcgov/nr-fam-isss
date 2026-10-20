@@ -88,4 +88,22 @@ describe("NoAccess", () => {
             expect(logout).toHaveBeenCalledTimes(1);
         });
     });
+
+    it("uses the deployment's own name when env.json brands it", () => {
+        window.localStorage.setItem(
+            "env_data",
+            JSON.stringify({
+                app_acronym: { sensitive: false, type: "string", value: "EAM" },
+                landing_image_alt: { sensitive: false, type: "string", value: "A locked door" },
+            })
+        );
+        try {
+            renderPage();
+
+            expect(screen.getByText("You do not have access in EAM")).toBeInTheDocument();
+            expect(screen.getByAltText("A locked door")).toBeInTheDocument();
+        } finally {
+            window.localStorage.removeItem("env_data");
+        }
+    });
 });
