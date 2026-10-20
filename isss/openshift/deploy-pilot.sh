@@ -28,6 +28,12 @@ TRUSTED_CLIENT=service-account-team-1750-6700
 REQUESTER_GUID=76a4033a7fe24371b2ee1ecb7f41a217
 BCEID_OSID=BC95-ED73-6464-462E
 BCEID_URL=https://gws1.test.bceid.ca/webservices/Client/V10/BCeIDService.asmx
+APP_NAME="NRS Access Management"   # branding read by the frontend from env.json
+APP_ACRONYM=NAM
+LANDING_IMAGE_URL=/branding/landing.jpg
+LANDING_IMAGE_ALT="A padlock on a green wrought-iron gate"
+LANDING_IMAGE_FIT=natural   # the photograph is 1024x678; do not stretch it to the full-height column
+FRONTEND_IMAGE=image-registry.openshift-image-registry.svc:5000/$BUILD_NS/nr-fam-frontend:isss   # frontend-build.yml
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 FAM_SRC="$(cd "$HERE/../.." && pwd)"   # this repo (nr-fam-isss) holds the FAM templates
@@ -85,16 +91,29 @@ step_fam() {
   $OC apply -f "$HERE/pilot-network-policies.yml" | sed 's/^/  /'
   echo "== nr-fam init (frontend env.json, network policies)"
   $OC process -f "$FAM_SRC/common/openshift.init.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" \
-    -p KEYCLOAK_ISSUER_URI="$DEV_REALM" -p KEYCLOAK_CLIENT_ID="$FAM_CLIENT_ID" -p TARGET_ENV=dev | $OC apply -f - | sed 's/^/  /'
+    -p KEYCLOAK_ISSUER_URI="$DEV_REALM" -p KEYCLOAK_CLIENT_ID="$FAM_CLIENT_ID" -p TARGET_ENV=dev \
+    -p APP_NAME="$APP_NAME" -p APP_ACRONYM="$APP_ACRONYM" -p LANDING_IMAGE_URL="$LANDING_IMAGE_URL" \
+    -p LANDING_IMAGE_ALT="$LANDING_IMAGE_ALT" -p LANDING_IMAGE_FIT="$LANDING_IMAGE_FIT" | $OC apply -f - | sed 's/^/  /'
   echo "== nr-fam backend ($TAG)"
   $OC process -f "$FAM_SRC/backend/openshift.deploy.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" -p IMAGE_TAG="$TAG" \
     -p MIN_REPLICAS=1 -p MAX_REPLICAS=1 -p CPU_REQUEST=150m -p MEMORY_REQUEST=640Mi -p MEMORY_LIMIT=1Gi \
     -p KEYCLOAK_ISSUER_URI="$DEV_REALM" -p FAM_OIDC_CLIENT_ID="$FAM_CLIENT_ID" -p FAM_DEPLOYMENT_ENVIRONMENT=dev \
     -p CSS_API_URL="$CSS_API_URL" -p CSS_TOKEN_URL="$PROD_REALM/protocol/openid-connect/token" -p CSS_OWN_INTEGRATION_ID="$FAM_INTEGRATION_ID" \
     -p SMTP_HOST= -p SMTP_FROM= -p FC_API_BASE_URL_TEST= -p FC_API_BASE_URL_PROD= | $OC apply -f - | sed 's/^/  /'
-  echo "== nr-fam frontend ($TAG)"
+  echo "== nr-fam frontend (in-cluster build, carries the branding)"
+  $OC policy add-role-to-group system:image-puller "system:serviceaccounts:$NS" -n "$BUILD_NS" >/dev/null
+  # The template's image path (registry/org/name/component) cannot name an internal ImageStream,
+  # so point the Deployment at the tools build after processing.
   $OC process -f "$FAM_SRC/frontend/openshift.deploy.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" -p IMAGE_TAG="$TAG" \
-    -p MIN_REPLICAS=1 -p MAX_REPLICAS=1 | $OC apply -f - | sed 's/^/  /'
+    -p MIN_REPLICAS=1 -p MAX_REPLICAS=1 -o json \
+    | FRONTEND_IMAGE="$FRONTEND_IMAGE" python3 -I -c '
+import json, os, sys
+doc = json.load(sys.stdin)
+for o in doc["items"]:
+    if o["kind"] == "Deployment":
+        for c in o["spec"]["template"]["spec"]["containers"]:
+            c["image"] = os.environ["FRONTEND_IMAGE"]
+json.dump(doc, sys.stdout)' | $OC apply -f - | sed 's/^/  /'
 }
 
 step_lookup() {

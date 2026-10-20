@@ -1,0 +1,49 @@
+# In-cluster build of the nr-fam frontend from this repository, so the pilot can carry ISSS
+# changes (branding through env.json) that upstream's ghcr.io image does not have.
+# Output: ImageStreamTag nr-fam-frontend:isss in the current namespace.
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: nr-fam-frontend-build
+parameters:
+  - name: GIT_URI
+    value: https://github.com/bcgov/nr-fam-isss.git
+  - name: GIT_REF
+    value: feature/ISSSDP-512-configurable-branding
+  - name: IMAGE_STREAM
+    value: nr-fam-frontend
+  - name: TAG
+    value: isss
+objects:
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      name: ${IMAGE_STREAM}
+      labels:
+        build: nr-fam-isss
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      name: ${IMAGE_STREAM}
+      labels:
+        build: nr-fam-isss
+    spec:
+      source:
+        type: Git
+        git:
+          uri: ${GIT_URI}
+          ref: ${GIT_REF}
+        contextDir: frontend
+      strategy:
+        type: Docker
+        dockerStrategy:
+          dockerfilePath: Dockerfile
+      output:
+        to:
+          kind: ImageStreamTag
+          name: ${IMAGE_STREAM}:${TAG}
+      resources:
+        requests: { cpu: 250m, memory: 1Gi }
+        limits: { cpu: "2", memory: 3Gi }
+      successfulBuildsHistoryLimit: 2
+      failedBuildsHistoryLimit: 2
