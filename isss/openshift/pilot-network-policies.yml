@@ -1,0 +1,35 @@
+# Dev namespace has no allow-same-namespace policy, so the pilot needs its own east-west rules.
+# Only the FAM backend may reach the database and the lookup API.
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: nr-fam-isss-dev-database-from-backend
+      labels: { app: nr-fam-isss-dev }
+    spec:
+      podSelector:
+        matchLabels: { deployment: nr-fam-isss-dev-database }
+      policyTypes: [Ingress]
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels: { deployment: nr-fam-isss-dev-backend }
+          ports:
+            - { protocol: TCP, port: 5432 }
+  - apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: nr-user-lookup-api-isss-dev-from-fam-backend
+      labels: { app: nr-user-lookup-api-isss-dev }
+    spec:
+      podSelector:
+        matchLabels: { deployment: nr-user-lookup-api-isss-dev }
+      policyTypes: [Ingress]
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels: { deployment: nr-fam-isss-dev-backend }
+          ports:
+            - { protocol: TCP, port: 8080 }

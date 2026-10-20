@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# ISSSDP-512 dev pilot on OpenShift Silver, namespace dabb52-tools (the only Epsilon namespace with
-# quota headroom). One replica of everything. Upstream public images for FAM; the lookup API is built
-# in-cluster from the fork branch that carries PR 17. Secrets are written from local files through
-# temp files (never on a command line) and the temp files are removed on exit.
+# ISSSDP-512 dev pilot on OpenShift Silver, namespace dabb52-dev (builds stay in dabb52-tools).
+# One replica of everything. Upstream public images for FAM; the lookup API is built in-cluster
+# from the fork branch that carries PR 17. Secrets are written from local files through temp files
+# (never on a command line) and the temp files are removed on exit.
 #
 #   ./deploy-pilot.sh db        PostgreSQL (dev-grade) + the four secrets FAM reads
 #   ./deploy-pilot.sh fam       nr-fam init (ConfigMap, policies), backend, frontend
@@ -10,7 +10,8 @@
 #   ./deploy-pilot.sh status    rollout status, pods, route
 set -euo pipefail
 OC=/opt/homebrew/bin/oc
-NS=dabb52-tools
+NS="${NS:-dabb52-dev}"   # target namespace for the running stack
+BUILD_NS=dabb52-tools    # builds and image streams stay in tools (Platform convention)
 NAME=nr-fam            # keeps the upstream image path ghcr.io/bcgov/nr-fam/<component>
 ZONE=isss-dev          # so every object is nr-fam-isss-dev-*
 APP="$NAME-$ZONE"
@@ -29,9 +30,8 @@ BCEID_OSID=BC95-ED73-6464-462E
 BCEID_URL=https://gws1.test.bceid.ca/webservices/Client/V10/BCeIDService.asmx
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-SCRATCH="${PILOT_SCRATCH:?set PILOT_SCRATCH to a folder holding fam/nr-fam and user-lookup/repo checkouts}"
-FAM_SRC="$SCRATCH/fam/nr-fam"
-LOOKUP_SRC="$SCRATCH/user-lookup/repo/backend"
+FAM_SRC="$(cd "$HERE/../.." && pwd)"   # this repo (nr-fam-isss) holds the FAM templates
+LOOKUP_SRC="${LOOKUP_SRC:-$HOME/Projects/nr-user-lookup-api/backend}"   # fork checkout, branch feature/trusted-clients
 TMP="$HERE/tmp"; umask 077; mkdir -p "$TMP"; trap 'rm -rf "$TMP"' EXIT
 
 $OC project "$NS" -q >/dev/null
@@ -81,6 +81,8 @@ step_db() {
 }
 
 step_fam() {
+  echo "== pilot network policies (backend to database and lookup API)"
+  $OC apply -f "$HERE/pilot-network-policies.yml" | sed 's/^/  /'
   echo "== nr-fam init (frontend env.json, network policies)"
   $OC process -f "$FAM_SRC/common/openshift.init.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" \
     -p KEYCLOAK_ISSUER_URI="$DEV_REALM" -p KEYCLOAK_CLIENT_ID="$FAM_CLIENT_ID" -p TARGET_ENV=dev | $OC apply -f - | sed 's/^/  /'
@@ -97,8 +99,14 @@ step_fam() {
 
 step_lookup() {
   echo "== lookup API build from the fork (PR 17)"
-  $OC process -f "$HERE/lookup-api-build.yml" | $OC apply -f - | sed 's/^/  /'
-  $OC start-build nr-user-lookup-api-backend 2>&1 | sed 's/^/  /' || true
+  $OC process -f "$HERE/lookup-api-build.yml" | $OC apply -n "$BUILD_NS" -f - | sed 's/^/  /'
+  if ! $OC get istag nr-user-lookup-api-backend:isss -n "$BUILD_NS" >/dev/null 2>&1; then
+    $OC start-build nr-user-lookup-api-backend -n "$BUILD_NS" 2>&1 | sed 's/^/  /' || true
+  fi
+  if [ "$NS" != "$BUILD_NS" ]; then
+    # Let the target namespace pull the image built in tools.
+    $OC policy add-role-to-group system:image-puller "system:serviceaccounts:$NS" -n "$BUILD_NS" 2>&1 | sed 's/^/  /'
+  fi
   echo "== lookup API deployment"
   read_env "$HOME/.raven/.env" BCEID_WEB_SERVICE_USERNAME BCEID_WEB_SERVICE_PASSWORD
   cat > "$TMP/lookup.params" <<EOF
@@ -107,7 +115,7 @@ ZONE=$ZONE
 DOMAIN=$DOMAIN
 IMAGE_TAG=isss
 REGISTRY=image-registry.openshift-image-registry.svc:5000
-ORG=$NS
+ORG=$BUILD_NS
 MIN_REPLICAS=1
 MAX_REPLICAS=1
 KEYCLOAK_ISSUER_URI=$PROD_REALM
