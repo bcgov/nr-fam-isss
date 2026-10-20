@@ -2,8 +2,8 @@ import { Logout } from "@carbon/icons-react";
 import { Button, Column, Grid } from "@carbon/react";
 import type { FC } from "react";
 import logo from "@/assets/images/bc-gov-logo.png";
-import treeLogs from "@/assets/images/tree-logs.jpg";
 import { useAuth } from "@/context/auth/useAuth";
+import { getBranding } from "@/utils/Branding";
 import "@/pages/Landing/Landing.css";
 import "./NoAccess.css";
 
@@ -29,6 +29,7 @@ import "./NoAccess.css";
  */
 export const NoAccess: FC = () => {
     const { authState, logout } = useAuth();
+    const { acronym, landingImageUrl, landingImageAlt, landingImageFit } = getBranding();
 
     const signedInAs =
         authState.famLoginUser?.displayName ||
@@ -49,17 +50,17 @@ export const NoAccess: FC = () => {
                         </div>
 
                         <h1 id="no-access-title" className="landing-title">
-                            You do not have access in FAM
+                            {`You do not have access in ${acronym}`}
                         </h1>
 
                         <h2 id="no-access-subtitle" className="landing-subtitle">
                             {signedInAs
-                                ? `You're signed in as ${signedInAs}, but this account has not been granted any FAM administrative role.`
-                                : "This account has not been granted any FAM administrative role."}
+                                ? `You're signed in as ${signedInAs}, but this account has not been granted any ${acronym} administrative role.`
+                                : `This account has not been granted any ${acronym} administrative role.`}
                         </h2>
 
                         <p id="no-access-desc" className="landing-note">
-                            Ask a FAM administrator to grant you access.
+                            {`Ask a ${acronym} administrator to grant you access.`}
                         </p>
 
                         <div className="landing-actions">
@@ -82,9 +83,9 @@ export const NoAccess: FC = () => {
 
                 <Column className="landing-img-col" sm={4} md={8} lg={8}>
                     <img
-                        src={treeLogs}
-                        alt="Stacked logs at a British Columbia mill"
-                        className="landing-img"
+                        src={landingImageUrl}
+                        alt={landingImageAlt}
+                        className={`landing-img landing-img--${landingImageFit}`}
                     />
                 </Column>
             </Grid>
