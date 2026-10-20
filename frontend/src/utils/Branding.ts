@@ -18,13 +18,22 @@ export interface Branding {
     landingImageUrl: string;
     /** Alt text for that photograph. */
     landingImageAlt: string;
+    /**
+     * `cover` fills the full-height column, cropping as needed (FAM's tall photograph).
+     * `natural` shows the photograph at no more than its own size, so a smaller or
+     * landscape one is not stretched.
+     */
+    landingImageFit: LandingImageFit;
 }
+
+export type LandingImageFit = "cover" | "natural";
 
 export const DEFAULT_BRANDING: Branding = {
     name: "Forests Access Management",
     acronym: "FAM",
     landingImageUrl: treeLogs,
     landingImageAlt: "Stacked logs at a British Columbia mill",
+    landingImageFit: "cover",
 };
 
 /**
@@ -38,4 +47,6 @@ export const getBranding = (): Branding => ({
         getEnvValue("landing_image_url") ?? DEFAULT_BRANDING.landingImageUrl,
     landingImageAlt:
         getEnvValue("landing_image_alt") ?? DEFAULT_BRANDING.landingImageAlt,
+    landingImageFit:
+        getEnvValue("landing_image_fit") === "natural" ? "natural" : "cover",
 });

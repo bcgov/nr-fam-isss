@@ -162,6 +162,18 @@
   display: block;
 }
 
+/*
+  A photograph smaller than the column keeps its own size (and aspect) rather
+  than being blown up to fill it: shrink to fit, never enlarge, centred.
+*/
+.landing-img.landing-img--natural {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 /* Below md the photo would crowd the content out, so it stands down. */
 @media (max-width: 671px) {
   .landing-content-col {

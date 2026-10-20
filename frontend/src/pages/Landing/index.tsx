@@ -117,7 +117,7 @@ export const Landing: FC = () => {
                     <img
                         src={branding.landingImageUrl}
                         alt={branding.landingImageAlt}
-                        className="landing-img"
+                        className={`landing-img landing-img--${branding.landingImageFit}`}
                     />
                 </Column>
             </Grid>

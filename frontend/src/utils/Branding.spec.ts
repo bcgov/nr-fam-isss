@@ -30,6 +30,7 @@ describe("getBranding", () => {
             app_acronym: "EAM",
             landing_image_url: "/branding/landing.jpg",
             landing_image_alt: "A locked door",
+            landing_image_fit: "natural",
         });
 
         expect(getBranding()).toEqual({
@@ -37,7 +38,15 @@ describe("getBranding", () => {
             acronym: "EAM",
             landingImageUrl: "/branding/landing.jpg",
             landingImageAlt: "A locked door",
+            landingImageFit: "natural",
         });
+    });
+
+    it("crops to fill unless the fit is exactly natural", () => {
+        // An unknown value must not leave the photograph unstyled.
+        setEnv({ landing_image_fit: "stretch" });
+
+        expect(getBranding().landingImageFit).toBe("cover");
     });
 
     it("keeps FAM's value for a key left blank", () => {

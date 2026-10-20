@@ -55,6 +55,9 @@ parameters:
   - name: LANDING_IMAGE_ALT
     description: Alt text for the sign-in photograph
     value: ""
+  - name: LANDING_IMAGE_FIT
+    description: cover (fill the column, crop) or natural (never enlarge); blank is cover
+    value: ""
 objects:
   - apiVersion: v1
     kind: ConfigMap
@@ -104,6 +107,10 @@ objects:
           "landing_image_alt": {
             "sensitive": false, "type": "string",
             "value": "${LANDING_IMAGE_ALT}"
+          },
+          "landing_image_fit": {
+            "sensitive": false, "type": "string",
+            "value": "${LANDING_IMAGE_FIT}"
           }
         }
   - apiVersion: networking.k8s.io/v1

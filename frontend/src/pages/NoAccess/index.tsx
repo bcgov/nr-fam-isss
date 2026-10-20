@@ -29,7 +29,7 @@ import "./NoAccess.css";
  */
 export const NoAccess: FC = () => {
     const { authState, logout } = useAuth();
-    const { acronym, landingImageUrl, landingImageAlt } = getBranding();
+    const { acronym, landingImageUrl, landingImageAlt, landingImageFit } = getBranding();
 
     const signedInAs =
         authState.famLoginUser?.displayName ||
@@ -85,7 +85,7 @@ export const NoAccess: FC = () => {
                     <img
                         src={landingImageUrl}
                         alt={landingImageAlt}
-                        className="landing-img"
+                        className={`landing-img landing-img--${landingImageFit}`}
                     />
                 </Column>
             </Grid>
