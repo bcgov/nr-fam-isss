@@ -9,7 +9,7 @@ parameters:
   - name: GIT_URI
     value: https://github.com/bcgov/nr-fam-isss.git
   - name: GIT_REF
-    value: feature/ISSSDP-512-configurable-branding
+    value: main
   - name: IMAGE_STREAM
     value: nr-fam-frontend
   - name: TAG
