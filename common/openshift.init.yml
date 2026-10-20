@@ -42,6 +42,22 @@ parameters:
     value: dev
   - name: DOMAIN
     value: apps.gold.devops.gov.bc.ca
+  # Optional branding (frontend/src/utils/Branding.ts). Blank keeps FAM's own.
+  - name: APP_NAME
+    description: Full product name, e.g. Forests Access Management
+    value: ""
+  - name: APP_ACRONYM
+    description: Short product name, e.g. FAM
+    value: ""
+  - name: LANDING_IMAGE_URL
+    description: Same-origin URL of the sign-in photograph
+    value: ""
+  - name: LANDING_IMAGE_ALT
+    description: Alt text for the sign-in photograph
+    value: ""
+  - name: LANDING_IMAGE_FIT
+    description: cover (fill the column, crop) or natural (never enlarge); blank is cover
+    value: ""
 objects:
   - apiVersion: v1
     kind: ConfigMap
@@ -75,6 +91,26 @@ objects:
           "target_env": {
             "sensitive": false, "type": "string",
             "value": "${TARGET_ENV}"
+          },
+          "app_name": {
+            "sensitive": false, "type": "string",
+            "value": "${APP_NAME}"
+          },
+          "app_acronym": {
+            "sensitive": false, "type": "string",
+            "value": "${APP_ACRONYM}"
+          },
+          "landing_image_url": {
+            "sensitive": false, "type": "string",
+            "value": "${LANDING_IMAGE_URL}"
+          },
+          "landing_image_alt": {
+            "sensitive": false, "type": "string",
+            "value": "${LANDING_IMAGE_ALT}"
+          },
+          "landing_image_fit": {
+            "sensitive": false, "type": "string",
+            "value": "${LANDING_IMAGE_FIT}"
           }
         }
   - apiVersion: networking.k8s.io/v1
