@@ -172,6 +172,14 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  /*
+    Centred within the full-height column by its own offset: Carbon's column
+    rule wins over the column's display: flex, so align-items never applies.
+  */
+  margin: 0 auto;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* Below md the photo would crowd the content out, so it stands down. */
