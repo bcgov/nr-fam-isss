@@ -33,6 +33,7 @@ APP_ACRONYM=NAM
 LANDING_IMAGE_URL=/branding/landing.jpg
 LANDING_IMAGE_ALT="A padlock on a green wrought-iron gate"
 LANDING_IMAGE_FIT=natural   # the photograph is 1024x678; do not stretch it to the full-height column
+PUBLIC_HOST=nam-dev.$DOMAIN   # the NAM address; must be a redirect URI on CSS integration 6702
 FRONTEND_IMAGE=image-registry.openshift-image-registry.svc:5000/$BUILD_NS/nr-fam-frontend:isss   # frontend-build.yml
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -103,16 +104,24 @@ step_fam() {
   echo "== nr-fam frontend (in-cluster build, carries the branding)"
   $OC policy add-role-to-group system:image-puller "system:serviceaccounts:$NS" -n "$BUILD_NS" >/dev/null
   # The template's image path (registry/org/name/component) cannot name an internal ImageStream,
-  # so point the Deployment at the tools build after processing.
+  # and its route host is $NAME-$ZONE.$DOMAIN, so after processing point the Deployment at the
+  # tools build and add a second Route for the NAM address.
   $OC process -f "$FAM_SRC/frontend/openshift.deploy.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" -p IMAGE_TAG="$TAG" \
     -p MIN_REPLICAS=1 -p MAX_REPLICAS=1 -o json \
-    | FRONTEND_IMAGE="$FRONTEND_IMAGE" python3 -I -c '
+    | FRONTEND_IMAGE="$FRONTEND_IMAGE" PUBLIC_HOST="$PUBLIC_HOST" python3 -I -c '
 import json, os, sys
 doc = json.load(sys.stdin)
 for o in doc["items"]:
     if o["kind"] == "Deployment":
         for c in o["spec"]["template"]["spec"]["containers"]:
             c["image"] = os.environ["FRONTEND_IMAGE"]
+    if o["kind"] == "Route":
+        # A route host cannot be changed after creation, so the NAM address is a second Route.
+        nam = json.loads(json.dumps(o))
+        nam["metadata"]["name"] += "-nam"
+        nam["spec"]["host"] = os.environ["PUBLIC_HOST"]
+        extra = nam
+doc["items"].append(extra)
 json.dump(doc, sys.stdout)' | $OC apply -f - | sed 's/^/  /'
 }
 

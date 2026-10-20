@@ -16,3 +16,8 @@ each component, about 300m CPU / 1.1Gi memory of the namespace's 500m / 2Gi requ
 
 Moved to `dabb52-dev` on 2026-10-20, after the quota increase (1 CPU / 4Gi / 2Gi storage), with the
 tools database restored into the new one.
+
+Renamed NRS Access Management (NAM) on 2026-10-20: the frontend is built in `dabb52-tools`
+(`frontend-build.yml`) so env.json can brand it, and it answers at
+`https://nam-dev.apps.silver.devops.gov.bc.ca` (a second Route; the old `nr-fam-isss-dev` host still works).
+Both hosts are dev redirect URIs on CSS integration 6702.
