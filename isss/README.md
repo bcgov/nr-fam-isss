@@ -20,5 +20,5 @@ tools database restored into the new one.
 
 Renamed NRS Access Management (NAM) on 2026-10-20: the frontend is built in `dabb52-tools`
 (`frontend-build.yml`) so env.json can brand it, and it answers at
-`https://nam-dev.apps.silver.devops.gov.bc.ca` (a second Route; the old `nr-fam-isss-dev` host still works).
+`https://nam-dev.apps.silver.devops.gov.bc.ca` (Route `nr-fam-isss-dev-frontend-nam`; the old `nr-fam-isss-dev` host was retired the same day).
 Both hosts are dev redirect URIs on CSS integration 6702.

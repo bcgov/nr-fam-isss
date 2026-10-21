@@ -108,7 +108,7 @@ step_fam() {
   $OC policy add-role-to-group system:image-puller "system:serviceaccounts:$NS" -n "$BUILD_NS" >/dev/null
   # The template's image path (registry/org/name/component) cannot name an internal ImageStream,
   # and its route host is $NAME-$ZONE.$DOMAIN, so after processing point the Deployment at the
-  # tools build and add a second Route for the NAM address.
+  # tools build and serve the Route at the NAM address instead.
   $OC process -f "$FAM_SRC/frontend/openshift.deploy.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" -p IMAGE_TAG=isss \
     -p MIN_REPLICAS=1 -p MAX_REPLICAS=1 -o json \
     | FRONTEND_IMAGE="$FRONTEND_IMAGE" PUBLIC_HOST="$PUBLIC_HOST" python3 -I -c '
@@ -119,12 +119,10 @@ for o in doc["items"]:
         for c in o["spec"]["template"]["spec"]["containers"]:
             c["image"] = os.environ["FRONTEND_IMAGE"]
     if o["kind"] == "Route":
-        # A route host cannot be changed after creation, so the NAM address is a second Route.
-        nam = json.loads(json.dumps(o))
-        nam["metadata"]["name"] += "-nam"
-        nam["spec"]["host"] = os.environ["PUBLIC_HOST"]
-        extra = nam
-doc["items"].append(extra)
+        # Renamed, not rehosted: a route host cannot be changed after creation, and the
+        # -nam route already exists. The template default nr-fam-isss-dev address was retired.
+        o["metadata"]["name"] += "-nam"
+        o["spec"]["host"] = os.environ["PUBLIC_HOST"]
 json.dump(doc, sys.stdout)' | $OC apply -f - | sed 's/^/  /'
 }
 
