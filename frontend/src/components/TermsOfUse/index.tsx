@@ -8,6 +8,7 @@ import {
 import { useState, type FC } from "react";
 import { InlineSpinner } from "@/components/InlineSpinner";
 import { useAuth } from "@/context/auth/useAuth";
+import { getBranding } from "@/utils/Branding";
 import "./terms-of-use.scss";
 
 /*
@@ -18,6 +19,10 @@ import "./terms-of-use.scss";
     carried the same words but lost the numbering - its list markup restarted and
     nested wrongly, so "section 4" and "section 11" pointed at nothing. The
     numbering here follows the PDF.
+
+    The dialog's title and introduction carry the deployment's own name (see
+    Branding). The agreement below does not: it is the approved text, and
+    renaming the parties' "FAM" in it is a new version like any other change.
 
     Changing the wording is a new version. Change it together with
     FamConstants.CURRENT_TERMS_AND_CONDITIONS_VERSION in the backend, which is
@@ -473,6 +478,7 @@ export const TermsOfUse: FC = () => {
     const { acceptTermsOfUse, logout } = useAuth();
     const [submitting, setSubmitting] = useState(false);
     const [failed, setFailed] = useState(false);
+    const { acronym } = getBranding();
 
     const handleAccept = async () => {
         if (submitting) {
@@ -501,7 +507,7 @@ export const TermsOfUse: FC = () => {
             open
             className="terms-of-use"
             size="lg"
-            aria-label="FAM Terms of use"
+            aria-label={`${acronym} Terms of use`}
             preventCloseOnClickOutside
             // Escape and the close button both land here. Neither is a choice,
             // so returning false keeps the dialog open.
@@ -510,11 +516,11 @@ export const TermsOfUse: FC = () => {
             // before either button.
             selectorPrimaryFocus=".terms-of-use__intro"
         >
-            <ModalHeader title="FAM Terms of use" />
+            <ModalHeader title={`${acronym} Terms of use`} />
             <ModalBody hasScrollingContent aria-label="Terms of use text">
                 <p className="terms-of-use__intro" tabIndex={-1}>
                     As a Business BCeID delegated administrator, you must accept
-                    the FAM Terms of Use before you can manage access. You can
+                    the {acronym} Terms of Use before you can manage access. You can
                     also{" "}
                     <a href={TERMS_PDF_PATH} target="_blank" rel="noopener noreferrer">
                         download a copy (PDF)

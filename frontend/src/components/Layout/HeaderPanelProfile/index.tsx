@@ -5,6 +5,7 @@ import AvatarImage from "@/components/Layout/AvatarImage";
 import { useAuth } from "@/context/auth/useAuth";
 import { TERMS_PDF_PATH } from "@/components/TermsOfUse";
 import { isDelegatedAdmin } from "@/routes/routePaths";
+import { getBranding } from "@/utils/Branding";
 import "./HeaderPanelProfile.css";
 
 /**
@@ -24,11 +25,12 @@ const PROVIDER_LABEL: Record<string, string> = {
     bceidbusiness: "Business BCeID",
 };
 
-const ROLE_LABEL: Record<string, string> = {
-    FAM_ADMIN: "FAM administrator",
+/** The administrator of the whole deployment is named after it: "NAM administrator". */
+const roleLabels = (acronym: string): Record<string, string> => ({
+    FAM_ADMIN: `${acronym} administrator`,
     APP_ADMIN: "Application administrator",
     DELEGATED_ADMIN: "Delegated administrator",
-};
+});
 
 /**
  * Most privileged first: a FAM administrator is usually an application
@@ -48,7 +50,9 @@ export const HeaderPanelProfile: FC = () => {
     const primaryRole = ROLE_PRIORITY.find((role) =>
         authState.accessRoles.includes(role)
     );
-    const roleLabel = primaryRole ? ROLE_LABEL[primaryRole] : null;
+    const roleLabel = primaryRole
+        ? roleLabels(getBranding().acronym)[primaryRole]
+        : null;
     const nameWithRole = roleLabel
         ? `${fullName || "User"} (${roleLabel})`
         : fullName || "User";
