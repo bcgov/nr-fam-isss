@@ -35,7 +35,7 @@
         "@carbon/react": "^1.105.0",
         "@carbon/type": "^11.31.0",
         "@tanstack/react-query": "^5.102.3",
-        "axios": "^1.18.1",
+        "axios": "^1.20.0",
         "bootstrap": "^5.3.8",
         "fam-api": "file:./client-code-gen/gen/fam-api",
         "luxon": "^3.5.0",
