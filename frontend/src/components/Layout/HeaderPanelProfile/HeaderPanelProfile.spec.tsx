@@ -135,4 +135,25 @@ describe("HeaderPanelProfile", () => {
 
         expect(logout).toHaveBeenCalledTimes(1);
     });
+
+    it("names the administrator role after the deployment's own name", () => {
+        window.localStorage.setItem(
+            "env_data",
+            JSON.stringify({
+                app_acronym: { sensitive: false, type: "string", value: "NAM" },
+            })
+        );
+        try {
+            renderPanel({
+                famLoginUser: { displayName: "Jane Doe" },
+                accessRoles: ["FAM_ADMIN"],
+            });
+
+            expect(
+                screen.getByText("Jane Doe (NAM administrator)")
+            ).toBeInTheDocument();
+        } finally {
+            window.localStorage.removeItem("env_data");
+        }
+    });
 });
