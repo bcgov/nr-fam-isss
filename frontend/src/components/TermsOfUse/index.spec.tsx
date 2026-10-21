@@ -90,4 +90,24 @@ describe("TermsOfUse", () => {
         );
         expect(logout).not.toHaveBeenCalled();
     });
+
+    it("titles the dialog with the deployment's own name", () => {
+        // The agreement text itself is the approved copy and stays as it is.
+        window.localStorage.setItem(
+            "env_data",
+            JSON.stringify({
+                app_acronym: { sensitive: false, type: "string", value: "NAM" },
+            })
+        );
+        try {
+            renderTerms();
+
+            expect(screen.getByText("NAM Terms of use")).toBeInTheDocument();
+            expect(
+                screen.getByText(/you must accept the NAM Terms of Use/)
+            ).toBeInTheDocument();
+        } finally {
+            window.localStorage.removeItem("env_data");
+        }
+    });
 });
