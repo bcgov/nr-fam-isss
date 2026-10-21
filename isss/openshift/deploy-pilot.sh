@@ -16,7 +16,10 @@ NAME=nr-fam            # keeps the upstream image path ghcr.io/bcgov/nr-fam/<com
 ZONE=isss-dev          # so every object is nr-fam-isss-dev-*
 APP="$NAME-$ZONE"
 DOMAIN=apps.silver.devops.gov.bc.ca
-TAG=latest
+# Upstream backend release, pinned so a pod restart cannot pick up whatever upstream
+# released last. Tag for reading, digest for the guarantee (a tag can be moved).
+# To upgrade: pick a numbered tag from ghcr.io/bcgov/nr-fam/backend, set both, redeploy.
+BACKEND_TAG="47@sha256:94a08249808c1dd900ab1e468612a6928c80f03bea6c5b5e0d3cd19e471ed855"
 FAM_CLIENT_ID=fam-arts-spike-6702
 FAM_INTEGRATION_ID=6702
 DEV_REALM=https://dev.loginproxy.gov.bc.ca/auth/realms/standard
@@ -95,8 +98,8 @@ step_fam() {
     -p KEYCLOAK_ISSUER_URI="$DEV_REALM" -p KEYCLOAK_CLIENT_ID="$FAM_CLIENT_ID" -p TARGET_ENV=dev \
     -p APP_NAME="$APP_NAME" -p APP_ACRONYM="$APP_ACRONYM" -p LANDING_IMAGE_URL="$LANDING_IMAGE_URL" \
     -p LANDING_IMAGE_ALT="$LANDING_IMAGE_ALT" -p LANDING_IMAGE_FIT="$LANDING_IMAGE_FIT" | $OC apply -f - | sed 's/^/  /'
-  echo "== nr-fam backend ($TAG)"
-  $OC process -f "$FAM_SRC/backend/openshift.deploy.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" -p IMAGE_TAG="$TAG" \
+  echo "== nr-fam backend ($BACKEND_TAG)"
+  $OC process -f "$FAM_SRC/backend/openshift.deploy.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" -p IMAGE_TAG="$BACKEND_TAG" \
     -p MIN_REPLICAS=1 -p MAX_REPLICAS=1 -p CPU_REQUEST=150m -p MEMORY_REQUEST=640Mi -p MEMORY_LIMIT=1Gi \
     -p KEYCLOAK_ISSUER_URI="$DEV_REALM" -p FAM_OIDC_CLIENT_ID="$FAM_CLIENT_ID" -p FAM_DEPLOYMENT_ENVIRONMENT=dev \
     -p CSS_API_URL="$CSS_API_URL" -p CSS_TOKEN_URL="$PROD_REALM/protocol/openid-connect/token" -p CSS_OWN_INTEGRATION_ID="$FAM_INTEGRATION_ID" \
@@ -106,7 +109,7 @@ step_fam() {
   # The template's image path (registry/org/name/component) cannot name an internal ImageStream,
   # and its route host is $NAME-$ZONE.$DOMAIN, so after processing point the Deployment at the
   # tools build and add a second Route for the NAM address.
-  $OC process -f "$FAM_SRC/frontend/openshift.deploy.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" -p IMAGE_TAG="$TAG" \
+  $OC process -f "$FAM_SRC/frontend/openshift.deploy.yml" -p NAME="$NAME" -p ZONE="$ZONE" -p DOMAIN="$DOMAIN" -p IMAGE_TAG=isss \
     -p MIN_REPLICAS=1 -p MAX_REPLICAS=1 -o json \
     | FRONTEND_IMAGE="$FRONTEND_IMAGE" PUBLIC_HOST="$PUBLIC_HOST" python3 -I -c '
 import json, os, sys

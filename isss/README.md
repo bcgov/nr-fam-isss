@@ -4,8 +4,9 @@ Everything ISSS-specific lives under `isss/`; the rest of this repository mirror
 
 `openshift/deploy-pilot.sh` stands the dev pilot up in OpenShift Silver namespace `dabb52-dev`
 (builds stay in `dabb52-tools`) in stages (`db`, `fam`, `lookup`, `status`): a dev-grade PostgreSQL (`postgres-dev.yml`), the secrets
-FAM reads, upstream's `common/openshift.init.yml`, backend and frontend templates with the public
-`ghcr.io/bcgov/nr-fam` images, and nr-user-lookup-api built in-cluster (`lookup-api-build.yml`) from
+FAM reads, upstream's `common/openshift.init.yml`, the backend template with the public
+`ghcr.io/bcgov/nr-fam/backend` image pinned by tag and digest (`BACKEND_TAG`), the frontend built in-cluster
+from `main` (`frontend-build.yml`), and nr-user-lookup-api built in-cluster (`lookup-api-build.yml`) from
 the branch carrying bcgov/nr-user-lookup-api#17 (checkout path `LOOKUP_SRC`, default
 `~/Projects/nr-user-lookup-api/backend`). `pilot-network-policies.yml` lets only the FAM backend reach
 the database and the lookup API (dev has no allow-same-namespace policy). Credentials come from local files
